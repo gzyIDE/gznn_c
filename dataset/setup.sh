@@ -13,3 +13,10 @@ if ( ! -d cifar-100-binary ) then
   tar xvzf cifar-100-binary.tar.gz
   mv cifar-100-binary.tar.gz ./tars
 endif
+
+if ( ! -d mnist ) then
+  mkdir mnist
+  pushd mnist
+  unzip ../tars/MNIST_CSV.zip
+  popd
+endif
