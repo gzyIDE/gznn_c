@@ -22,12 +22,11 @@ void maxpool_forward(layer_t *layer, size_t batch) {
   int ocol        = layer->signal->width[2];
 
   int i, j, k, l;
-  #pragma omp parallel for private(i,j,k,l)
+  #pragma omp parallel for collapse(2)
   for (int b = 0; b < batch; b++) {
-    float *in  = &input->signal[b*irow*icol*ich];
-    float *out = &layer->signal->signal[b*orow*ocol*och];
-
     for (int ch = 0; ch < och; ch++) {
+      float *in  = &input->signal[b*irow*icol*ich];
+      float *out = &layer->signal->signal[b*orow*ocol*och];
       for (i = 0; i < orow; i++) {
         for (j = 0; j < ocol; j++) {
           float max  = FLT_MIN;
@@ -68,14 +67,13 @@ void maxpool_backward(layer_t *layer, size_t batch) {
   memset(layer->delta, 0, sizeof(float)*irow*icol*ich*batch);
 
   int i, j, k, l;
-  #pragma omp parallel for private(i,j,k,l)
+  #pragma omp parallel for collapse(2)
   for (int b = 0; b < batch; b++) {
-    float *in      = &input->signal[b*irow*icol*ich];
-    float *out     = &layer->signal->signal[b*orow*ocol*och];
-    float *delta_i = &layer->delta[b*irow*icol*ich];
-    float *delta_o = &layer->next->delta[b*orow*ocol*och];
-
     for (int ch = 0; ch < och; ch++) {
+      float *in      = &input->signal[b*irow*icol*ich];
+      float *out     = &layer->signal->signal[b*orow*ocol*och];
+      float *delta_i = &layer->delta[b*irow*icol*ich];
+      float *delta_o = &layer->next->delta[b*orow*ocol*och];
       for (i = 0; i < orow; i++) {
         for (j = 0; j < ocol; j++) {
           int oidx   = ch*orow*ocol+i*ocol+j;

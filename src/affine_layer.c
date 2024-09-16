@@ -21,10 +21,11 @@ void affine_forward(layer_t *layer, size_t batch) {
   for (int d = 2; d < layer->dim; d++) elm *= layer->width[d];
 
   // layer->weight: (elm, och)
-  matmul(isig, layer->weight, osig, batch, elm, elm, och, 0, 0);
-  for (int b = 0; b < batch; b++) {
-    vadd(&osig[b*och], layer->bias, &osig[b*och], och);
-  }
+  //matmul(isig, layer->weight, osig, batch, elm, elm, och, 0, 0);
+  //vadd_batch(osig, layer->bias, osig, och, batch);
+
+  gemm(isig, layer->weight, layer->bias, osig, 1.0, 1.0,
+       batch, elm, elm, och, 0, 0, 1, 1);
 }
 
 void affine_backward(layer_t *layer, size_t batch) {
@@ -68,11 +69,7 @@ void affine_update(layer_t *layer, int step, size_t batch) {
   float b2   = layer->beta2;
   float rate = layer->learning_rate;
   adam(layer->wm, layer->wv, grad_w, layer->weight, b1, b2, rate, step, elm*och);
-  adam(layer->bm, layer->bv, grad_b, layer->weight, b1, b2, rate, step, och);
-
-  for ( int ch = 0; ch < och; ch++) {
-    layer->bias[ch] -= grad_b[ch] * rate;
-  }
+  adam(layer->bm, layer->bv, grad_b, layer->bias, b1, b2, rate, step, och);
 
   free(grad_w);
   free(grad_b);

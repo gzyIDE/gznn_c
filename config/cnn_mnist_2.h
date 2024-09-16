@@ -1,5 +1,5 @@
 #define EPOCH      1
-#define BATCH_SIZE 10
+#define BATCH_SIZE 100
 #define TRAIN_SIZE 60000
 #define TEST_SIZE  10000
 param_t param;

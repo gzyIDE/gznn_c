@@ -31,12 +31,12 @@ void conv_forward(layer_t *layer, size_t batch) {
     // weight: (och, fsize*fsize*ich)
     // data  : transpose(orow*ocol, fsize*fsize*ich)
     im2col(in, data, irow, icol, ich, fsize, pad, stride);
-    matmul(layer->weight, data, out, och, ielm, oelm, ielm, 0, 1);
 
-    for (int ch = 0; ch < och; ch++) {
-      float *outch = &out[ch*orow*ocol];
-      vbias(outch, outch, layer->bias[ch], orow*ocol);
-    }
+    //matmul(layer->weight, data, out, och, ielm, oelm, ielm, 0, 1);
+    //vbias(out, out, layer->bias, orow*ocol, och);
+
+    gemm(layer->weight, data, layer->bias, out, 1.0, 1.0,
+         och, ielm, oelm, ielm, 0, 1, 0, 1);
   }
 
   free(data);
@@ -107,8 +107,9 @@ void conv_update(layer_t *layer, int step, size_t batch) {
   int oelm          = orow * ocol;
   float *data       = (float *)xmalloc(sizeof(float)*ielm*orow*ocol); //im2col result
 
-  float *grad_w     = (float *)xmalloc(sizeof(float)*fsize*fsize*ich*och);
-  float *grad_w_sum = (float *)xcalloc(fsize*fsize*ich*och,sizeof(float));
+  //float *grad_w     = (float *)xcalloc(sizeof(float)*fsize*fsize*ich*och);
+  float *grad_w     = (float *)xcalloc(fsize*fsize*ich*och,sizeof(float));
+  //float *grad_w_sum = (float *)xcalloc(fsize*fsize*ich*och,sizeof(float));
   float *grad_b     = (float *)xcalloc(och, sizeof(float));
 
   // gradient calculation
@@ -119,13 +120,13 @@ void conv_update(layer_t *layer, int step, size_t batch) {
     // delta_o : (och, orow*ocol)
     // data    : (orow*ocol, fsize*fsize*ich)
     im2col(in, data, irow, icol, ich, fsize, pad, stride);
-    matmul(delta_o, data, grad_w, och, oelm, oelm, ielm, 0, 0);
-    saxpy(1.0, grad_w, grad_w_sum, grad_w_sum, fsize*fsize*ich*och);
 
-    for (int ch = 0; ch < och; ch++) {
-      grad_b[ch] = vsum(&layer->next->delta[orow*ocol*ch], orow*ocol);
-    }
+    //matmul(delta_o, data, grad_w, och, oelm, oelm, ielm, 0, 0);
+    //saxpy(1.0, grad_w, grad_w_sum, grad_w_sum, ielm*och);
+    gemm(delta_o, data, grad_w, grad_w, 1.0, 1.0, och, oelm, oelm, ielm, 0, 0, 0, 0);
   }
+
+  vsum_batch(layer->next->delta, grad_b, orow*ocol, och, batch);
 
   // Update with Adam
   float b1   = layer->beta1;
@@ -136,7 +137,7 @@ void conv_update(layer_t *layer, int step, size_t batch) {
 
   free(data);
   free(grad_w);
-  free(grad_w_sum);
+  //free(grad_w_sum);
   free(grad_b);
 }
 

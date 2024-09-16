@@ -8,6 +8,7 @@
 #include "operation.h"
 #include "layers.h"
 #include "bmp.h"
+#include <time.h>
 
 int debug_print_en;
 
@@ -27,111 +28,31 @@ int main(int argc, char **argv) {
   //#include "slp_mnist.h"
   //#include "slp_cifar10.h"
   //#include "mlp_cifar10.h"
-  #include "mlp_cifar10_2.h"
+  //#include "mlp_cifar10_2.h"
   //#include "cnn_cifar10.h"
-  //#include "cnn_cifar10_2.h"
+  #include "cnn_cifar10_2.h"
   //#include "cnn_cifar10_3.h"
 
   print_layer(model);
 
   // Training
   float loss;
+  struct timespec start_time, end_time;
+  clock_gettime(CLOCK_REALTIME, &start_time);
   for (int e = 0; e < EPOCH; e++) {
     for (int i = 0; i < TRAIN_SIZE/BATCH_SIZE; i++) {
       int step = e * (TRAIN_SIZE/BATCH_SIZE) + i + 1;
       forward(model, &train_data[i*BATCH_SIZE], BATCH_SIZE);
       loss = backward(model, &train_data[i*BATCH_SIZE], BATCH_SIZE);
       update(model, &train_data[i*BATCH_SIZE], step, BATCH_SIZE);
-      //if ( i == 0 ) {
-      //  for (int ch = 0; ch < 30; ch++) {
-      //    printf("CH : %d\n", ch);
-      //    for (int ich = 0; ich < 3; ich++) {
-      //      for (int x = 0; x < 3; x++) {
-      //        for (int y = 0; y < 3; y++) {
-      //          printf("%lf ", model->next->weight[ch*(3*3*3)+ich*9+x*3+y]);
-      //        }
-      //        printf("\n");
-      //      }
-      //      printf("\n");
-      //    }
-      //    printf("\n");
-      //    printf("bias: %lf\n", model->signal->signal[ch]);
-      //    printf("\n");
-      //    for (int x = 0; x < 32; x++) {
-      //      for (int y = 0; y < 32; y++) {
-      //        printf("%1.3f ", model->next->signal->signal[ch*32*32+x*32+y]);
-      //      }
-      //      printf("\n");
-      //    }
-      //  }
-      //  
-
-      //  //for (int ch = 0; ch < 30; ch++) {
-      //  //  printf("\n");
-      //  //  for (int x = 0; x < 16; x++) {
-      //  //    for (int y = 0; y < 16; y++) {
-      //  //      printf("%1.3f ", model->signal->signal[ch*16*16+x*16+y]);
-      //  //    }
-      //  //    printf("\n");
-      //  //  }
-      //  //}
-      //  
-
-      //  return 0;
-      //}
-
-      //if ( i == 0) {
-      //for (int x = 0; x < 32; x++) {
-      //  for (int y = 0; y < 32; y++) {
-      //    printf("%1.3f ", output_layer->prev->prev->prev->prev->prev->signal->signal[x*32+y]);
-      //  }
-      //  printf("\n");
-      //}
-      //return 0;
-      //}
-
-      //if ( i == 1) {
-      //for (int x = 0; x < 10; x++) {
-      //  for (int y = 0; y < 100; y++) {
-      //    printf("%1.3f ", output_layer->prev->weight[x*100+y]);
-      //  }
-      //  printf("\n");
-      //}
-      //return 0;
-      //}
-
-      //for (int x = 0; x < 10; x++) {
-      //  for (int y = 0; y < 100; y++) {
-      //    printf("%1.3f ", output_layer->prev->v[x*100+y]);
-      //  }
-      //  printf("\n");
-      //}
-      //return 0;
-
-      //for (int i = 0; i < 10; i++) {
-      //  printf("%1.3f ", output_layer->prev->signal->signal[i]);
-      //}
-      //printf("\n");
-      //return 0;
-
-      //for (int b = 0; b < BATCH_SIZE; b++) {
-      //for (int i = 0; i < 10; i++) {
-      //  printf("%lf ", output_layer->delta[b*10+i]);
-      //}
-      //printf("\n");
-      //}
-      //return 0;
-
-      //for (int b = 0; b < BATCH_SIZE; b++) {
-      //for (int i = 0; i < 10; i++) {
-      //  printf("%lf ", output_layer->signal->signal[b*10+i]);
-      //}
-      //printf("\n");
-      //}
-
       printf("loss[%d]: %lf\n", i, loss);
     }
   }
+  clock_gettime(CLOCK_REALTIME, &end_time);
+  double sec = 
+    (double)(end_time.tv_sec - start_time.tv_sec) +
+    (double)(end_time.tv_nsec - start_time.tv_nsec) / (1000 * 1000 * 1000);
+  printf("Training time: %lf\n", sec);
 
   // Test
   int confusion_matrix[10][10];
