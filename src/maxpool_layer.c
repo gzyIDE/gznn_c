@@ -22,7 +22,7 @@ void maxpool_forward(layer_t *layer, size_t batch) {
   int ocol        = layer->signal->width[2];
 
   int i, j, k, l;
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) private(i,j,k,l)
   for (int b = 0; b < batch; b++) {
     for (int ch = 0; ch < och; ch++) {
       float *in  = &input->signal[b*irow*icol*ich];
@@ -67,7 +67,7 @@ void maxpool_backward(layer_t *layer, size_t batch) {
   memset(layer->delta, 0, sizeof(float)*irow*icol*ich*batch);
 
   int i, j, k, l;
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) private(i, j, k, l)
   for (int b = 0; b < batch; b++) {
     for (int ch = 0; ch < och; ch++) {
       float *in      = &input->signal[b*irow*icol*ich];
